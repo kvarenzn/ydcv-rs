@@ -39,8 +39,7 @@ impl YdResponse {
         let mut result: Vec<String> = vec![];
 
         if self.error_code != 0 || self.translate_result.is_none() {
-            result.push(fmt.red(" -- No result for this query."));
-            return result.join("\n");
+            return format!("{}\n", fmt.red("  没有对应的翻译"));
         }
 
         result.push(fmt.cyan("  翻译结果："));
