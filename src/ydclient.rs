@@ -5,12 +5,12 @@ use std::collections::HashMap;
 use std::env::var;
 use std::error::Error;
 // use reqwest::header::Connection;
+use log::debug;
 use super::ydresponse::YdResponse;
-use crate::Client;
+use reqwest::blocking::Client;
 use reqwest::header::{COOKIE, HOST, ORIGIN, REFERER, USER_AGENT};
 use reqwest::Url;
 
-use hex;
 use md5::{Digest, Md5};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -79,7 +79,7 @@ impl YdClient for Client {
         let app_version = String::from("5.0 (X11)");
         let mut hasher = Md5::new();
         hasher.update(app_version.as_bytes());
-        let bv = hex::encode(hasher.finalize());
+        let bv = format!("{:2x}", hasher.finalize());
         params.insert("bv", &bv);
 
         let timestamp = SystemTime::now()
@@ -94,7 +94,8 @@ impl YdClient for Client {
         let sign = format!("{}{}{}{}", api, word, timestamp, api_key);
         let mut hasher = Md5::new();
         hasher.update(sign.as_bytes());
-        let signed = hex::encode(hasher.finalize());
+        let signed = hasher.finalize();
+        let signed = format!("{:2x}", signed);
         params.insert("sign", &signed);
 
         let mut body = String::new();

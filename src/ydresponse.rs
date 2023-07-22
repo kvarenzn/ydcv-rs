@@ -1,7 +1,8 @@
 //! parser for the returned result from YD
 
 use crate::formatters::Formatter;
-use serde_json::{self, Error as SerdeError};
+use serde::{Deserialize, Serialize};
+use serde_json::{self, Error as SerdeError, Value};
 
 /// Basic result structure
 #[derive(Serialize, Deserialize, Debug)]

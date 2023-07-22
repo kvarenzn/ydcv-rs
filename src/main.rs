@@ -1,11 +1,5 @@
 //! main module of ydcv-rs
 #[macro_use]
-extern crate serde_derive;
-
-#[macro_use]
-extern crate log;
-
-#[macro_use]
 extern crate lazy_static;
 
 #[cfg(windows)]
@@ -14,9 +8,11 @@ use clipboard2::{Clipboard, SystemClipboard};
 
 #[cfg(unix)]
 #[cfg(feature = "clipboard")]
-use x11_clipboard::Clipboard;
+use copypasta::ClipboardContext;
 
-use reqwest::{Client, ClientBuilder};
+use copypasta::ClipboardProvider;
+
+use reqwest::blocking::{Client, ClientBuilder};
 use rustyline::Editor;
 use structopt::StructOpt;
 
@@ -145,7 +141,7 @@ fn main() {
     #[cfg(not(feature = "clipboard"))]
     let selection_enabled = false;
 
-    let mut client = ClientBuilder::new().use_sys_proxy().build().unwrap();
+    let mut client = ClientBuilder::new().build().unwrap();
 
     let mut html = HtmlFormatter::new(notify_enabled);
     let mut ansi = AnsiFormatter::new(notify_enabled);
@@ -183,19 +179,14 @@ fn main() {
             #[cfg(unix)]
             #[cfg(feature = "clipboard")]
             {
-                let clipboard = Clipboard::new().unwrap();
+                let mut clipboard = ClipboardContext::new().unwrap();
                 let mut last = String::new();
 
                 println!("Waiting for selection> ");
 
                 loop {
                     std::thread::sleep(std::time::Duration::from_millis(interval));
-                    if let Ok(curr) = clipboard.load_wait(
-                        clipboard.getter.atoms.primary,
-                        clipboard.getter.atoms.utf8_string,
-                        clipboard.getter.atoms.property,
-                    ) {
-                        let curr = String::from_utf8_lossy(&curr);
+                    if let Ok(curr) = clipboard.get_contents() {
                         let curr = curr.trim_matches('\u{0}').trim();
                         if !curr.is_empty() && last != curr {
                             last = curr.to_owned();
@@ -226,7 +217,7 @@ fn main() {
                 }
             }
         } else {
-            let mut reader = Editor::<()>::new();
+            let mut reader = Editor::<()>::new().unwrap();
             while let Ok(w) = reader.readline("> ") {
                 let word = w.trim();
                 reader.add_history_entry(word);
